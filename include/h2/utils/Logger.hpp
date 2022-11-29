@@ -26,15 +26,6 @@
 #define H2_LOG_ACTIVE_LEVEL H2_LOG_LEVEL_INFO
 #endif
 
-/*
-FIXME(KLG): Do I need this?
-#define H2_LOG(level, ...)                                                 \
-    ::h2::logger().log(                                                   \
-        ::spdlog::source_loc{__FILE__, __LINE__, H2_PRETTY_FUNCTION},          \
-        level,                                                                 \
-        __VA_ARGS__)
-*/
-
 #if H2_LOG_ACTIVE_LEVEL <= H2_LOG_LEVEL_TRACE
 #define H2_TRACE(...)                                                          \
     if (spdlog::get(H2_LOGGER_NAME) != nullptr)                                \
@@ -101,11 +92,24 @@ namespace h2
 class Logger
 {
 public:
-    Logger() { initialize(); }
+
+    /** @brief Logger constructor.
+     *  @param std::string pattern Sets log statement headers.
+     *  Default = [<Date> <Time> <Timezone>] [<Hostname> <Rank>] [<Log Level>]
+     * FIXME: This is dumb. Custom tag or filename but not both is a problem
+     *  @param std::string filename Name of output file. Default = none.
+     **/
+  Logger(std::string pattern = "[%D %H:%M %z] [%h (Rank %w/%W)] [%^%L%$] %v",
+         std::string filename = "none")
+  { initialize(pattern, filename); }
+
+    /** @brief Destructor **/
     ~Logger() { finalize(); }
 
+
 private:
-    void initialize();
+
+    void initialize(std::string pattern, std::string filename);
     void finalize();
     void load_log_level();
 

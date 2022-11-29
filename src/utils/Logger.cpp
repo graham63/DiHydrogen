@@ -11,6 +11,7 @@
                             // environment variable
 #include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include "spdlog/sinks/basic_file_sink.h"
 
 #if __has_include(<mpi.h>)
 #define H2_LOGGER_HAS_MPI
@@ -176,17 +177,21 @@ public:
 namespace h2
 {
 
-void Logger::initialize()
+void Logger::initialize(std::string pattern, std::string filename)
 {
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+      filename);
 
     auto formatter = std::make_unique<spdlog::pattern_formatter>();
     formatter->add_flag<HostnameFlag>('h');
     formatter->add_flag<MPISizeFlag>('W');
-    formatter->add_flag<MPIRankFlag>('w').set_pattern(
-        "[%D %H:%M %z] [%h (Rank %w/%W)] [%^%L%$] %v");
+    formatter->add_flag<MPIRankFlag>('w').set_pattern(pattern + "%v");
 
-    std::vector<spdlog::sink_ptr> sinks{console_sink};
+    if( filename == "none")
+      std::vector<spdlog::sink_ptr> sinks{console_sink};
+    else
+      std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
 
     auto logger = std::make_shared<spdlog::logger>(
         H2_LOGGER_NAME, sinks.begin(), sinks.end());
